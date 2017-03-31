@@ -1,4 +1,6 @@
 import numpy as np
+from mock import _ANY
+from pandas.lib import cache_readonly
 
 
 def affine_forward(x, w, b):
@@ -25,8 +27,8 @@ def affine_forward(x, w, b):
   # will need to reshape the input into rows.                                 #
   #############################################################################
 
-  x = np.reshape(x, (x.shape[0], reduce(lambda d1, d2: d1 * d2, x.shape[1:], 1)))
-  out = np.dot(x, w) + b
+  x_reshape = np.reshape(x, (x.shape[0], reduce(lambda d1, d2: d1 * d2, x.shape[1:], 1)))
+  out = np.dot(x_reshape, w) + b
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -54,7 +56,24 @@ def affine_backward(dout, cache):
   #############################################################################
   # TODO: Implement the affine backward pass.                                 #
   #############################################################################
-  pass
+
+  # partial_L/partial_x = partial_L/partial_dout * partial_out/partial_x = dout * partial_{wx + b} / partial_{x}
+  # = dout * w
+  # therefore
+
+  dx = np.dot(dout, w.T)
+  dx = np.reshape(dx, x.shape)
+
+  # partial_L / partial_x = dout * x
+
+  dw = np.dot(np.reshape(x, (x.shape[0], reduce(lambda d1, d2: d1 * d2, x.shape[1:], 1))).T, dout)
+
+  # partial_L / partial_b = dout * 1
+
+  db = np.sum(dout, axis=0)
+
+
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -76,7 +95,9 @@ def relu_forward(x):
   #############################################################################
   # TODO: Implement the ReLU forward pass.                                    #
   #############################################################################
-  pass
+
+  out = np.maximum(x, 0)
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -96,10 +117,20 @@ def relu_backward(dout, cache):
   - dx: Gradient with respect to x
   """
   dx, x = None, cache
+
+  ## activate(x) = max(x, 0)
+  ## partial_actiavate / partial_x = 1 if x > 0
+  ## 0 else
+
   #############################################################################
   # TODO: Implement the ReLU backward pass.                                   #
   #############################################################################
-  pass
+
+  activate_partial = np.ones_like(x)
+  activate_partial[ x < 0 ] = 0
+
+  dx = dout * activate_partial
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
