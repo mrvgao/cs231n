@@ -1,4 +1,5 @@
 import numpy as np
+from qtconsole.styles import dark_color
 
 from cs231n.layers import *
 from cs231n.layer_utils import *
@@ -280,12 +281,12 @@ class FullyConnectedNet(object):
 
     layer_input = X
 
-    caches = []
+    caches = {}
     for index, p in enumerate(self.parames_name):
         w, b = p
 
         layer_output, cache = affine_forward(layer_input, self.params[w], self.params[b])
-        caches.append(cache)
+        caches[(w, b)] = cache
 
         if index == len(self.parames_name) - 1:
             scores = layer_output
@@ -294,7 +295,7 @@ class FullyConnectedNet(object):
         layer_input = layer_output
         ## batch norma
         layer_output, cache = relu_forward(layer_input)
-        caches.append(cache)
+        caches[str((w, b))+'relu'] = cache
         layer_input = layer_output
         ## dropout
 
@@ -328,7 +329,22 @@ class FullyConnectedNet(object):
     # automated tests, make sure that your L2 regularization includes a factor #
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
-    pass
+
+
+    # the forward pass is affine, so the backward pass is reule ==> affine
+
+    for index, w_b in enumerate(reversed(self.parames_name)):
+        w, b = w_b
+        if index == 0:
+            d_back = dout
+        else:
+            d_back = relu_backward(dx, caches[str((w, b))+'relu'])
+
+        dx, grads[w], grads[b] = affine_backward(d_back, caches[(w, b)])
+
+    for w, b in self.parames_name:
+        grads[w] += self.reg * self.params[w]
+
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
