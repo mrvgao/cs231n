@@ -129,8 +129,8 @@ class TwoLayerNet(object):
     # d_w1 = dL / d_relu * d_rele / d_w1
 
     loss += 1./2 * self.reg * (np.sum(self.params['W1'] ** 2) + np.sum(self.params['W2'] ** 2))
-    grads['W1'] += 0.5 * self.reg * self.params['W1']
-    grads['W2'] += 0.5 * self.reg * self.params['W2']
+    grads['W1'] += self.reg * self.params['W1']
+    grads['W2'] += self.reg * self.params['W2']
 
     return loss, grads
 
