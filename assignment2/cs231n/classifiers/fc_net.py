@@ -297,6 +297,11 @@ class FullyConnectedNet(object):
         layer_output, cache = relu_forward(layer_input)
         caches[str((w, b))+'relu'] = cache
         layer_input = layer_output
+
+        if self.use_dropout:
+            layout_output, cache = dropout_forward(layer_input, self.dropout_param)
+            caches[str((w, b))+'drop'] = cache
+            layer_input = layer_output
         ## dropout
 
     ############################################################################
@@ -331,16 +336,20 @@ class FullyConnectedNet(object):
     ############################################################################
 
 
-    # the forward pass is affine, so the backward pass is reule ==> affine
+    # the forward pass is affine, so the backward pass is [drop =>] reule ==> affine
+
+    d_back = None
 
     for index, w_b in enumerate(reversed(self.parames_name)):
         w, b = w_b
         if index == 0:
             d_back = dout
         else:
-            d_back = relu_backward(dx, caches[str((w, b))+'relu'])
+            if self.use_dropout:
+                d_back = dropout_backward(d_back, caches[str((w, b))+'drop'])
+            d_back = relu_backward(d_back, caches[str((w, b))+'relu'])
 
-        dx, grads[w], grads[b] = affine_backward(d_back, caches[(w, b)])
+        d_back, grads[w], grads[b] = affine_backward(d_back, caches[(w, b)])
 
     for w, b in self.parames_name:
         grads[w] += self.reg * self.params[w]
