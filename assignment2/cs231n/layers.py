@@ -423,12 +423,57 @@ def conv_forward_naive(x, w, b, conv_param):
     W' = 1 + (W + 2 * pad - WW) / stride
   - cache: (x, w, b, conv_param)
   """
-    out = None
+    N, C, H, W = x.shape
+    F, _, HH, WW = w.shape
+
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+
+    H_out = (H + 2 * pad - HH) / stride + 1
+    W_out = (W + 2 * pad - WW) / stride + 1
+
+    out = np.zeros(shape=(N, F, H_out, W_out))
+
+    x_pad = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant')
+
+    '''
+    r, c = -1, -1  # initial row and column's index
+    for n in range(N):
+        for f in range(F):
+
+            for col in range(H_out):
+                c = col * stride
+
+                for row in range(W_out):
+                    r = row * stride
+                    window = x_pad[n, :, c: c+HH, r: r+WW]
+                    conv = np.sum(window * w[f] + b[f])
+                    out[n, f, col, row] = conv
+    '''
+    Hp = 1 + (H + 2 * pad - HH) / stride
+    Wp = 1 + (W + 2 * pad - WW) / stride
+
+    out = np.zeros((N, F, Hp, Wp))
+
+    # Add padding around each 2D image
+    padded = np.pad(x, [(0, 0), (0, 0), (pad, pad), (pad, pad)], 'constant')
+
+    for n in range(N):
+        for f in range(F):
+            for h_i in range(H_out):
+                hs = h_i * stride
+                for w_i in range(W_out):
+                    ws = w_i * stride
+
+                    window = x_pad[n, :, hs: hs+HH, ws: ws+WW]
+                    out[n, f, h_i, w_i] = np.sum(window * w[f]) + b[f]
+
+
     #############################################################################
     # TODO: Implement the convolutional forward pass.                           #
     # Hint: you can use the function np.pad for padding.                        #
     #############################################################################
-    pass
+
     #############################################################################
     #                             END OF YOUR CODE                              #
     #############################################################################
@@ -450,6 +495,18 @@ def conv_backward_naive(dout, cache):
   - db: Gradient with respect to b
   """
     dx, dw, db = None, None, None
+
+    x, w, b, conv_param = cache
+
+    pad = conv_param['pad']
+    stride = conv_param['stride']
+
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+
+
+
     #############################################################################
     # TODO: Implement the convolutional backward pass.                          #
     #############################################################################
